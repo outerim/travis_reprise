@@ -7,3 +7,10 @@ the public system as well but I have no use for that at this time.
 fails depending on the cycle of the moon. Fix your tests instead. Valid
 use cases are when a test suite fails because a worker died, code
 couldn't be checked out because GitHub had a temporary issue, etc.
+
+# Using
+
+```bash
+gem install travis_reprise
+travis_reprise USER REPO BRANCH
+```
