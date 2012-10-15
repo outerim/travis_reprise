@@ -2,12 +2,12 @@
 
 Gem::Specification.new do |s|
   s.name        = "travis_reprise"
-  s.version     = '0.1.1'
+  s.version     = '0.1.2'
   s.platform    = Gem::Platform::RUBY
   s.summary     = %q{Trigger travis rebuilds easily}
   s.author      = 'dev@bigcartel.com'
   s.email       = 'dev@bigcartel.com'
-  s.homepage     = 'https://github.com/bigcartel/travis_reprise'
+  s.homepage     = 'https://github.com/outerim/travis_reprise'
 
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {spec}/*`.split("\n")
