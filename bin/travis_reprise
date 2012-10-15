@@ -15,8 +15,9 @@ unless user && repo && branch
   exit 1
 end
 
+cfg_file = File.read(File.expand_path('~/.travis-reprise.json'))
 begin
-  config = JSON.parse(File.read(File.expand_path('~/.travis-reprise.json')))
+  config = JSON.parse(cfg_file)
 rescue Errno::ENOENT
   $stdout.sync = true
   print "Github Username: "
@@ -30,9 +31,10 @@ rescue Errno::ENOENT
   json = `curl -u '#{u}:#{p}' -d '{"scopes":["repo"],"note":"Travis Reprise"}' https://api.github.com/authorizations 2>/dev/null`
   data = JSON.parse(json)
   if data['token']
-    File.open(File.expand_path('~/.travis-reprise.json'), 'w') do |f|
+    File.open(cfg_file, 'w') do |f|
       f << json
     end
+    `chmod 600 #{cfg_file}`
   else
     puts "#{data['message']}: try again"
   end
