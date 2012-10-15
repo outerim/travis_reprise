@@ -6,6 +6,16 @@ require 'json'
 
 user, repo, branch = ARGV[0], ARGV[1], ARGV[2]
 
+unless user && repo && branch
+  if user && repo
+    user, repo, branch = 'bigcartel', user, repo
+  else
+    puts "USAGE: #{$0} [GITHUB_USER] REPO BRANCH_TO_BUILD"
+    puts "If not specified github user defaults to bigcartel"
+    exit 1
+  end
+end
+
 begin
   config = JSON.parse(File.read(File.expand_path('~/.travis-reprise.json')))
 rescue Errno::ENOENT
