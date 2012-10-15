@@ -1,0 +1,81 @@
+#!/usr/bin/env ruby
+
+require 'github_api'
+require 'net/https'
+require 'json'
+
+user, repo, branch = ARGV[0], ARGV[1], ARGV[2]
+
+begin
+  config = JSON.parse(File.read(File.expand_path('~/.travis-reprise.json')))
+rescue Errno::ENOENT
+  $stdout.sync = true
+  print "Github Username: "
+  u = $stdin.gets.chomp
+  print "Github Password: "
+  `stty -echo`
+  p = $stdin.gets.chomp
+  `stty echo`
+  puts
+
+  json = `curl -u '#{u}:#{p}' -d '{"scopes":["repo"],"note":"Travis Reprise"}' https://api.github.com/authorizations 2>/dev/null`
+  data = JSON.parse(json)
+  if data['token']
+    File.open(File.expand_path('~/.travis-reprise.json'), 'w') do |f|
+      f << json
+    end
+  else
+    puts "#{data['message']}: try again"
+  end
+  retry
+end
+
+gh = Github.new oauth_token: config['token']
+
+branch_data = gh.repos.branch(user, repo, branch)
+head = gh.repos.commits.get(user, repo, branch_data.commit.sha)
+hook = gh.repos.hooks.all(user, repo).find { |h| h.name == 'travis' }
+
+payload = {
+  :after => head.sha,
+  :before => head.parents.first.sha,
+  :ref => "refs/heads/#{branch}",
+  :commits => [{
+    :id => head.sha,
+    :message => head.commit.message,
+    :timestamp => head.commit.author['date'],
+    :url => "https://github.com/#{user}/#{repo}/commit/#{head.sha}",
+    :author => author = {
+      :name => head.commit.author.name,
+      :email => head.commit.author.email
+    },
+    :committer => author
+  }],
+  :compare => "http://dummy",
+  :repository => {
+    :name => repo,
+    :owner => { :name => user },
+    :private => true,
+    :url => "https://github.com/#{user}/#{repo}"
+  }
+}
+
+#pull_payload = gh.events.repository(user, repo).select { |e| e.type == 'PullRequestEvent' }.first.payload
+
+payload = JSON.pretty_generate(payload)
+
+http = Net::HTTP.new('notify.travis-ci.com', 443)
+http.use_ssl = true
+http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+post = Net::HTTP::Post.new('/')
+post.basic_auth hook.config.user, hook.config.token
+post['X-GitHub-Event'] = 'push'
+post.set_form_data({ :payload => payload })
+
+result = http.request(post)
+
+if result.code == '204'
+  puts "It may have worked, go check travis"
+else
+  puts "OOPS: Travis responded #{result.inspect}"
+end
