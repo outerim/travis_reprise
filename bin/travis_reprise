@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 
+# Pardon code fugliness that follows, got it working, don't care to
+# clean it up at this point...
+
 require 'github_api'
 require 'net/https'
 require 'json'
