@@ -42,7 +42,7 @@ rescue Errno::ENOENT
   retry
 end
 
-gh = Github.new oauth_token: config['token']
+gh = Github.new :oauth_token => config['token']
 
 branch_data = gh.repos.branch(user, repo, branch)
 head = gh.repos.commits.get(user, repo, branch_data.commit.sha)
